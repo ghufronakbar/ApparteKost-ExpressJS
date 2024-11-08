@@ -84,4 +84,5 @@ model Bookmark {
   userId          Int
   boardingHouse   BoardingHouse @relation(fields: [boardingHouseId], references: [boardingHouseId])
   boardingHouseId Int
+  bookmarkDate    DateTime      @default(now())
 }
