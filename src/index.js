@@ -7,6 +7,7 @@ import cors from 'cors';
 import { PORT, SERVER_URL } from './constant/index.js';
 
 import webRoutes from './routes/web.js';
+import mobileRoutes from './routes/mobile.js';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(cors());
 
 // ROUTES
 app.use('/api/web', webRoutes);
+app.use('/api/mobile', mobileRoutes);
 
 app.get('/', (req, res) => {
   return res.status(200).json({ status: 200, message: "Hello World" });

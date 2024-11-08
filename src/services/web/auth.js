@@ -34,7 +34,7 @@ export const login = async (req, res) => {
                     password: true,
                     isConfirmed: true
                 }
-            })
+            }),
         ])
         if (!admin && !boardingHouse) {
             return res.status(400).json({ status: 400, message: 'Email tidak ditemukan!' })
@@ -81,7 +81,7 @@ export const registerBoarding = async (req, res) => {
         }
         const data = { name, owner, email, phone, description, district, subdistrict, location, maxCapacity: Number(maxCapacity), price: Number(price) }
 
-        const [admin, boardingHouse] = await Promise.all([
+        const [admin, boardingHouse, user] = await Promise.all([
             prisma.admin.findFirst({
                 where: {
                     email
@@ -101,9 +101,14 @@ export const registerBoarding = async (req, res) => {
                     email: true,
                     password: true
                 }
+            }),
+            prisma.user.count({
+                where: {
+                    email
+                }
             })
         ])
-        if (admin || boardingHouse) {
+        if (admin || boardingHouse || user) {
             return res.status(400).json({ status: 400, message: 'Email sudah terdaftar!' })
         }
         const uris = pictures.map(picture => ({ picture: picture.path }))

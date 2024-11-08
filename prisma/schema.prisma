@@ -15,37 +15,39 @@ model Admin {
 }
 
 model User {
-  userId   Int       @id @default(autoincrement())
-  email    String    @unique
-  name     String
-  phone    String
-  password String
-  picture  String? // Nullable picture
-  reviews  Review[] // Relasi dengan Review
-  bookings Booking[] // Relasi dengan Booking
+  userId    Int        @id @default(autoincrement())
+  email     String     @unique
+  name      String
+  phone     String
+  password  String     @db.Text
+  picture   String?
+  reviews   Review[]
+  bookings  Booking[]
+  bookmarks Bookmark[]
 }
 
 model BoardingHouse {
-  boardingHouseId Int       @id @default(autoincrement())
+  boardingHouseId Int        @id @default(autoincrement())
   name            String
   owner           String
   ownerPicture    String?
-  email           String    @unique
+  email           String     @unique
   phone           String
-  password        String?
-  description     String    @db.Text
+  password        String?    @db.Text
+  description     String     @db.Text
   district        String
   subdistrict     String
   location        String
-  panoramaPicture String? // Nullable panoramaPicture
+  panoramaPicture String?
   maxCapacity     Int
   price           Float
-  isPending       Boolean   @default(true)
-  isConfirmed     Boolean   @default(false)
-  isActive        Boolean   @default(false)
-  pictures        Picture[] // Relasi dengan Picture
-  reviews         Review[] // Relasi dengan Review
-  bookings        Booking[] // Relasi dengan Booking
+  isPending       Boolean    @default(true)
+  isConfirmed     Boolean    @default(false)
+  isActive        Boolean    @default(false)
+  pictures        Picture[]
+  reviews         Review[]
+  bookings        Booking[]
+  bookmarks       Bookmark[]
 }
 
 model Picture {
@@ -74,4 +76,12 @@ model Booking {
   boardingHouseId Int
   bookedDate      DateTime
   isActive        Boolean       @default(true)
+}
+
+model Bookmark {
+  bookmarkId      Int           @id @default(autoincrement())
+  user            User          @relation(fields: [userId], references: [userId])
+  userId          Int
+  boardingHouse   BoardingHouse @relation(fields: [boardingHouseId], references: [boardingHouseId])
+  boardingHouseId Int
 }

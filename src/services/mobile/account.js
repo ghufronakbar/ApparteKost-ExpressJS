@@ -1,0 +1,248 @@
+import express from 'express'
+import prisma from '../../db/prisma.js'
+const router = express.Router()
+import bcrypt from 'bcrypt'
+import jwt from "jsonwebtoken"
+import { APP_NAME, JWT_SECRET } from "../../constant/index.js"
+import uploadCloudinary from "../../utils/cloudinary/uploadCloudinary.js"
+import removeCloudinary from "../../utils/cloudinary/removeCloudinary.js"
+import sendWhatsapp from '../../utils/fonnte/sendWhatsapp.js'
+import verification from '../../middleware/verification.js'
+
+export const login = async (req, res) => {
+    const { email, password } = req.body
+    try {
+        if (!email || !password) {
+            return res.status(400).json({ status: 400, message: 'Email dan Password harus diisi!' })
+        }
+        const data = await prisma.user.findFirst({
+            where: {
+                email
+            },
+        })
+        if (!data) {
+            return res.status(404).json({ status: 404, message: 'Email atau Password salah!' })
+        }
+        const role = "USER"
+        const accessToken = jwt.sign({ id: data.userId, role }, JWT_SECRET)
+        const check = await bcrypt.compare(password, data.password)
+        if (!check) {
+            return res.status(400).json({ status: 400, message: 'Password salah!' })
+        }
+        return res.status(200).json({ status: 200, message: 'Login berhasil!', data: { accessToken, role } })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ status: 500, message: 'Terjadi kesalahan!' })
+    }
+}
+
+const register = async (req, res) => {
+    const { email, password, name, phone } = req.body
+    try {
+        if (!email || !password || !name || !phone) {
+            return res.status(400).json({ status: 400, message: 'Lengkapi data!' })
+        }
+        const [user, admin, boardingHouse] = await Promise.all([
+            prisma.user.count({
+                where: {
+                    email
+                },
+            }),
+            prisma.admin.count({
+                where: {
+                    email
+                },
+            }),
+            prisma.boardingHouse.count({
+                where: {
+                    email
+                },
+            }),
+        ])
+        if (user + admin + boardingHouse > 0) {
+            return res.status(400).json({ status: 400, message: 'Email sudah terdaftar' })
+        }
+        const hashedPassword = await bcrypt.hash(password, 10)
+        const created = await prisma.user.create({
+            data: {
+                email,
+                password: hashedPassword,
+                name,
+                phone,
+            }
+        })
+        const role = "USER"
+        const accessToken = jwt.sign({ id: created.userId, role }, JWT_SECRET)
+        return res.status(200).json({ status: 200, message: 'Register berhasil!', data: { ...created, accessToken, role } })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ status: 500, message: 'Terjadi kesalahan!' })
+    }
+}
+
+const profile = async (req, res) => {
+    const { id } = req.decoded
+    try {
+        const data = await prisma.user.findFirst({
+            where: {
+                userId: Number(id)
+            },
+        })
+        if (!data) {
+            return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
+        }
+        return res.status(200).json({ status: 200, message: 'Detail akun', data })
+    }
+    catch (error) {
+        console.log(error)
+        return res.status(500).json({ status: 500, message: 'Terjadi kesalahan!' })
+    }
+}
+
+const edit = async (req, res) => {
+    const { id } = req.decoded
+    const { name, phone, email } = req.body
+    try {
+        if (isNaN(Number(id))) {
+            return res.status(400).json({ status: 400, message: 'ID harus berupa angka!' })
+        }
+        if (!name || !phone || !email) {
+            return res.status(400).json({ status: 400, message: 'Lengkapi data!' })
+        }
+        const [admin, user, boardingHouse] = await Promise.all([
+            prisma.admin.findFirst({
+                where: {
+                    email
+                },
+                select: {
+                    adminId: true,
+                    email: true,
+                }
+            }),
+            prisma.user.findFirst({
+                where: {
+                    email
+                },
+                select: {
+                    userId: true,
+                    email: true,
+                }
+            }),
+            prisma.boardingHouse.findFirst({
+                where: {
+                    email
+                },
+                select: {
+                    boardingHouseId: true,
+                    email: true,
+                }
+            }),
+        ])
+        if (admin || boardingHouse) {
+            return res.status(400).json({ status: 400, message: 'Email sudah terdaftar' })
+        }
+        if (user && user.userId !== Number(id)) {
+            return res.status(400).json({ status: 400, message: 'Email sudah terdaftar' })
+        }
+        const updated = await prisma.user.update({
+            where: {
+                userId: Number(id)
+            },
+            data: {
+                name,
+                phone
+            }
+        })
+        return res.status(200).json({ status: 200, message: 'Berhasil mengubah profile', updated })
+    }
+    catch (error) {
+        console.log(error)
+        return res.status(500).json({ status: 500, message: 'Terjadi kesalahan!' })
+    }
+}
+
+const picture = async (req, res) => {
+    const { id } = req.decoded
+    const picture = req.file
+    try {
+        if (isNaN(Number(id))) {
+            return res.status(400).json({ status: 400, message: 'ID harus berupa angka!' })
+        }
+        if (!picture) {
+            return res.status(400).json({ status: 400, message: 'Lengkapi data!' })
+        }
+        const check = await prisma.user.findFirst({
+            where: {
+                userId: Number(id)
+            },
+            select: {
+                picture: true
+            }
+        })
+        if (!check) {
+            return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
+        }
+        if (check.picture) {
+            removeCloudinary(check.picture, "profile")
+        }
+        const updated = await prisma.user.update({
+            where: {
+                userId: Number(id)
+            },
+            data: {
+                picture: picture.path
+            }
+        })
+        return res.status(200).json({ status: 200, message: 'Berhasil mengubah foto profile', updated })
+    }
+    catch (error) {
+        console.log(error)
+        return res.status(500).json({ status: 500, message: 'Terjadi kesalahan!' })
+    }
+}
+
+const deletePicture = async (req, res) => {
+    const { id } = req.decoded
+    try {
+        if (isNaN(Number(id))) {
+            return res.status(400).json({ status: 400, message: 'ID harus berupa angka!' })
+        }
+        const check = await prisma.user.findFirst({
+            where: {
+                userId: Number(id)
+            },
+            select: {
+                picture: true
+            }
+        })
+        if (!check) {
+            return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
+        }
+        if (check.picture) {
+            removeCloudinary(check.picture, "profile")
+        }
+        const updated = await prisma.user.update({
+            where: {
+                userId: Number(id)
+            },
+            data: {
+                picture: null
+            }
+        })
+        return res.status(200).json({ status: 200, message: 'Berhasil menghapus foto profile', updated })
+    }
+    catch (error) {
+        console.log(error)
+        return res.status(500).json({ status: 500, message: 'Terjadi kesalahan!' })
+    }
+}
+
+
+router.get("/", verification(["USER"]), profile)
+router.put("/", verification(["USER"]), edit)
+router.patch("/", verification(["USER"]), uploadCloudinary("profile").single("picture"), picture)
+router.delete("/", verification(["USER"]), deletePicture)
+router.post("/login", login)
+router.post("/register", register)
+
+export default router

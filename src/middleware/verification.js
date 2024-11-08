@@ -15,7 +15,6 @@ const verification = (roles) => async (req, res, next) => {
             if (!decoded) {
                 return res.status(401).json({ status: 401, message: 'Unauthorized' })
             }
-            console.log({ roles, role: decoded })
             if (roles.includes(decoded.role)) {
                 req.decoded = decoded
                 next()

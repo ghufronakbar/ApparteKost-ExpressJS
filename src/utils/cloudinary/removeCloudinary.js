@@ -10,7 +10,7 @@ const extractPublicId = (url) => {
 
 const removeCloudinary = async (url, target) => {
     try {
-        const validTargets = ['attachment', 'profile', 'vendor', 'product'];
+        const validTargets = ['profile', 'boarding', 'panorama'];
         if (!validTargets.includes(target)) {
             throw new Error('Target not found');
         }
