@@ -40,6 +40,7 @@ model BoardingHouse {
   panoramaPicture String? // Nullable panoramaPicture
   maxCapacity     Int
   price           Float
+  isPending       Boolean   @default(true)
   isConfirmed     Boolean   @default(false)
   isActive        Boolean   @default(false)
   pictures        Picture[] // Relasi dengan Picture

@@ -3,8 +3,9 @@ import prisma from '../../db/prisma.js'
 const router = express.Router()
 import bcrypt from 'bcrypt'
 import jwt from "jsonwebtoken"
-import { JWT_SECRET } from "../../constant/index.js"
+import { APP_NAME, JWT_SECRET } from "../../constant/index.js"
 import uploadCloudinary from "../../utils/cloudinary/uploadCloudinary.js"
+import sendWhatsapp from '../../utils/fonnte/sendWhatsapp.js'
 
 export const login = async (req, res) => {
     const { email, password } = req.body
@@ -121,6 +122,10 @@ export const registerBoarding = async (req, res) => {
                 pictures: true
             }
         })
+        let message = ''
+        message = `*${APP_NAME}*\n\nKos: ${name} berhasil melakukan registrasi di ApparteKost. \n\nTunggu konfirmasi dalam 3x24 jam!`
+
+        sendWhatsapp(phone, message)
         return res.status(200).json({ status: 200, message: 'Pendaftaran berhasil!, tunggu konfirmasi dalam 3x24 jam!', data: create })
     } catch (error) {
         console.log(error)

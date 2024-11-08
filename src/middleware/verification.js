@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { JWT_SECRET } from '../constant/index.js'
 
-const verification = (roles) => async (req, res, next) => {    
+const verification = (roles) => async (req, res, next) => {
     try {
         const bearerToken = req.headers.authorization
         if (!bearerToken) {
@@ -15,8 +15,9 @@ const verification = (roles) => async (req, res, next) => {
             if (!decoded) {
                 return res.status(401).json({ status: 401, message: 'Unauthorized' })
             }
-            if (roles.includes(decoded.role)) {          
-                req.decoded = decoded      
+            console.log({ roles, role: decoded })
+            if (roles.includes(decoded.role)) {
+                req.decoded = decoded
                 next()
             } else {
                 return res.status(401).json({ status: 401, message: 'Unauthorized' })
