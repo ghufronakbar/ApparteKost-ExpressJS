@@ -119,6 +119,7 @@ const boarding = async (req, res) => {
         const review = data.reviews.filter(r => r.userId === userId)
         data.review = review.length > 0 ? review[0] : null
         delete data.bookmarks
+        data.urlGoogleMap = `https://www.google.com/maps/search/?api=1&query=${data.location},${data.subdistrict},${data.district},Indonesia`
         return res.status(200).json({ status: 200, message: 'Detail Kos', data })
     } catch (error) {
         console.log(error)
