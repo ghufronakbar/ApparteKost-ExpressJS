@@ -237,6 +237,51 @@ const deletePicture = async (req, res) => {
     }
 }
 
+const changePassword = async (req, res) => {
+    const { id } = req.decoded
+    const { newPassword, oldPassword, confirmPassword } = req.body
+    try {
+        if (isNaN(Number(id))) {
+            return res.status(400).json({ status: 400, message: 'ID harus berupa angka!' })
+        }
+        if (!newPassword || !oldPassword || !confirmPassword) {
+            return res.status(400).json({ status: 400, message: 'Lengkapi data!' })
+        }
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ status: 400, message: 'Konfirmasi password tidak sama!' })
+        }        
+        const check = await prisma.user.findFirst({
+            where: {
+                userId: Number(id)
+            },
+            select: {
+                password: true
+            }
+        })
+        if (!check) {
+            return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
+        }
+        const isValidPassword = await bcrypt.compare(oldPassword, check.password)
+        if (!isValidPassword) {
+            return res.status(400).json({ status: 400, message: 'Password lama salah!' })
+        }
+        const hashedPassword = await bcrypt.hash(newPassword, 10)
+        const updated = await prisma.user.update({
+            where: {
+                userId: Number(id)
+            },
+            data: {
+                password: hashedPassword
+            }
+        })
+        return res.status(200).json({ status: 200, message: 'Berhasil mengubah password', updated })
+    }
+    catch (error) {
+        console.log(error)
+        return res.status(500).json({ status: 500, message: 'Terjadi kesalahan!' })
+    }
+}
+
 
 router.get("/", verification(["USER"]), profile)
 router.put("/", verification(["USER"]), edit)
@@ -244,5 +289,6 @@ router.patch("/", verification(["USER"]), uploadCloudinary("profile").single("pi
 router.delete("/", verification(["USER"]), deletePicture)
 router.post("/login", login)
 router.post("/register", register)
+router.put("/change-password", verification(["USER"]), changePassword)
 
 export default router
