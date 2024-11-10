@@ -179,7 +179,7 @@ const edit = async (req, res) => {
         if (isNaN(Number(maxCapacity)) || isNaN(Number(price))) {
             return res.status(400).json({ status: 400, message: 'Harga dan Kapasitas harus berupa angka!' })
         }
-        const data = { name, owner, phone, description, district, subdistrict, location, maxCapacity, price }
+        const data = { name, owner, phone, description, district, subdistrict, location, maxCapacity: Number(maxCapacity), price: Number(price) }
         const check = await prisma.boardingHouse.count({
             where: {
                 boardingHouseId: Number(id)
