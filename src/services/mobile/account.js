@@ -154,7 +154,7 @@ const edit = async (req, res) => {
                 phone
             }
         })
-        return res.status(200).json({ status: 200, message: 'Berhasil mengubah profile', updated })
+        return res.status(200).json({ status: 200, message: 'Berhasil mengubah profile', data: updated })
     }
     catch (error) {
         console.log(error)
@@ -194,7 +194,7 @@ const picture = async (req, res) => {
                 picture: picture.path
             }
         })
-        return res.status(200).json({ status: 200, message: 'Berhasil mengubah foto profile', updated })
+        return res.status(200).json({ status: 200, message: 'Berhasil mengubah foto profile', data: updated })
     }
     catch (error) {
         console.log(error)
@@ -230,7 +230,7 @@ const deletePicture = async (req, res) => {
                 picture: null
             }
         })
-        return res.status(200).json({ status: 200, message: 'Berhasil menghapus foto profile', updated })
+        return res.status(200).json({ status: 200, message: 'Berhasil menghapus foto profile', data: updated })
     }
     catch (error) {
         console.log(error)
@@ -275,7 +275,7 @@ const changePassword = async (req, res) => {
                 password: hashedPassword
             }
         })
-        return res.status(200).json({ status: 200, message: 'Berhasil mengubah password', updated })
+        return res.status(200).json({ status: 200, message: 'Berhasil mengubah password', data: updated })
     }
     catch (error) {
         console.log(error)
