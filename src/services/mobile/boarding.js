@@ -101,7 +101,20 @@ const boarding = async (req, res) => {
             include: {
                 _count: true,
                 pictures: true,
-                reviews: true,
+                reviews: {
+                    select: {
+                        reviewId: true,
+                        rating: true,
+                        comment: true,
+                        createdAt: true,
+                        user: {
+                            select: {
+                                name: true,
+                                picture: true
+                            }
+                        }
+                    }
+                },
                 bookings: true,
                 bookmarks: {
                     select: {
