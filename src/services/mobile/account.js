@@ -8,6 +8,7 @@ import uploadCloudinary from "../../utils/cloudinary/uploadCloudinary.js"
 import removeCloudinary from "../../utils/cloudinary/removeCloudinary.js"
 import sendWhatsapp from '../../utils/fonnte/sendWhatsapp.js'
 import verification from '../../middleware/verification.js'
+import getRelativeTime from '../../utils/getRelativeTime.js'
 
 export const login = async (req, res) => {
     const { email, password } = req.body
@@ -249,7 +250,7 @@ const changePassword = async (req, res) => {
         }
         if (newPassword !== confirmPassword) {
             return res.status(400).json({ status: 400, message: 'Konfirmasi password tidak sama!' })
-        }        
+        }
         const check = await prisma.user.findFirst({
             where: {
                 userId: Number(id)
@@ -282,6 +283,93 @@ const changePassword = async (req, res) => {
     }
 }
 
+const histories = async (req, res) => {
+    const { id } = req.decoded
+    try {
+        if (isNaN(Number(id))) {
+            return res.status(400).json({ status: 400, message: 'ID harus berupa angka!' })
+        }
+
+        const [bookings, reviews] = await Promise.all([
+            prisma.booking.findMany({
+                where: {
+                    userId: Number(id)
+                },
+                select: {
+                    boardingHouse: {
+                        select: {
+                            pictures: true,
+                            district: true,
+                            subdistrict: true,
+                            boardingHouseId: true,
+                            name: true
+                        }
+                    },
+                    bookedDate: true
+                },
+                orderBy: {
+                    bookedDate: "desc"
+                }
+            }),
+            prisma.review.findMany({
+                where: {
+                    userId: Number(id)
+                },
+                select: {
+                    boardingHouse: {
+                        select: {
+                            pictures: true,
+                            district: true,
+                            subdistrict: true,
+                            boardingHouseId: true,
+                            name: true
+                        }
+                    },
+                    createdAt: true,
+                    rating: true
+                },
+                orderBy: {
+                    createdAt: "desc"
+                }
+            })
+        ])
+
+        const allHistories = []
+
+        for (const booking of bookings) {
+            allHistories.push({
+                type: "BOOKING",
+                boardingHouseId: booking.boardingHouse.boardingHouseId,
+                message: `Anda melakukan booking untuk Kos di ${booking.boardingHouse.name}`,
+                district: booking.boardingHouse.district,
+                subdistrict: booking.boardingHouse.subdistrict,
+                time: booking.bookedDate,
+                picture: booking.boardingHouse.pictures.length > 0 ? booking.boardingHouse.pictures[0].picture : null,
+                timeRelative: getRelativeTime(booking.bookedDate, "id")
+            })
+        }
+
+        for (const review of reviews) {
+            allHistories.push({
+                type: "REVIEW",
+                boardingHouseId: review.boardingHouse.boardingHouseId,
+                message: `Anda melakukan review dengan rating ${review.rating}⭐ untuk Kos di ${review.boardingHouse.name}`,
+                district: review.boardingHouse.district,
+                subdistrict: review.boardingHouse.subdistrict,
+                time: review.createdAt,
+                picture: review.boardingHouse.pictures.length > 0 ? review.boardingHouse.pictures[0].picture : null,
+                timeRelative: getRelativeTime(review.createdAt, "id")
+            })
+        }
+
+        return res.status(200).json({ status: 200, message: 'Berhasil mendapatkan riwayat', data: allHistories })
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ status: 500, message: 'Terjadi kesalahan!' })
+    }
+}
+
 
 router.get("/", verification(["USER"]), profile)
 router.put("/", verification(["USER"]), edit)
@@ -290,5 +378,6 @@ router.delete("/", verification(["USER"]), deletePicture)
 router.post("/login", login)
 router.post("/register", register)
 router.put("/change-password", verification(["USER"]), changePassword)
+router.get("/history", verification(["USER"]), histories)
 
 export default router

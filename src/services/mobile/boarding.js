@@ -57,7 +57,6 @@ const boardings = async (req, res) => {
         const bookmarked = [];
 
         for (const d of allData) {
-            // Hitung average rating
             d.averageRating = d.reviews.reduce((a, b) => a + b.rating, 0) / d.reviews.length || 0;
 
             if (d._count.bookings >= d.maxCapacity) continue;
@@ -103,10 +102,11 @@ const boarding = async (req, res) => {
                 _count: true,
                 pictures: true,
                 reviews: true,
+                bookings: true,
                 bookmarks: {
                     select: {
                         bookmarkId: true,
-                        userId: true
+                        userId: true,
                     }
                 }
             }
@@ -118,6 +118,8 @@ const boarding = async (req, res) => {
         data.isBookmarked = data.bookmarks.some(b => b.userId === userId)
         const review = data.reviews.filter(r => r.userId === userId)
         data.review = review.length > 0 ? review[0] : null
+        const booked = data.bookings.filter(b => b.userId === userId && b.isActive)
+        data.booking = booked.length > 0 ? booked[0] : null
         delete data.bookmarks
         data.urlGoogleMap = `https://www.google.com/maps/search/?api=1&query=${data.location},${data.subdistrict},${data.district},Indonesia`
         return res.status(200).json({ status: 200, message: 'Detail Kos', data })
@@ -219,6 +221,9 @@ const review = async (req, res) => {
     try {
         if (!boardingHouseId || isNaN(Number(boardingHouseId)) || !rating || isNaN(Number(rating))) {
             return res.status(400).json({ status: 400, message: 'Lengkapi data!' })
+        }
+        if (Number(rating) < 1 || Number(rating) > 5) {
+            return res.status(400).json({ status: 400, message: 'Rating tidak valid!' })
         }
         const [user, boardingHouse] = await Promise.all([
             prisma.user.findFirst({ where: { userId: Number(id) } }),
