@@ -1,13 +1,7 @@
 import express from 'express'
 import prisma from '../../db/prisma.js'
 const router = express.Router()
-import bcrypt from 'bcrypt'
-import jwt from "jsonwebtoken"
-import { APP_NAME, JWT_SECRET } from "../../constant/index.js"
-import uploadCloudinary from "../../utils/cloudinary/uploadCloudinary.js"
 import verification from "../../middleware/verification.js"
-import sendWhatsapp from '../../utils/fonnte/sendWhatsapp.js'
-import randomCharacter from '../../utils/randomCharacter.js'
 
 const boardings = async (req, res) => {
     const { id } = req.decoded;
@@ -107,6 +101,7 @@ const boarding = async (req, res) => {
                         rating: true,
                         comment: true,
                         createdAt: true,
+                        userId: true,
                         user: {
                             select: {
                                 name: true,
@@ -131,10 +126,13 @@ const boarding = async (req, res) => {
         data.isBookmarked = data.bookmarks.some(b => b.userId === userId)
         const review = data.reviews.filter(r => r.userId === userId)
         data.review = review.length > 0 ? review[0] : null
-        const booked = data.bookings.filter(b => b.userId === userId && b.isActive)
+        data.isReviewed = review.length > 0
+        const booked = data.bookings.filter(b => (b.userId === userId) && b.isActive)
         data.booking = booked.length > 0 ? booked[0] : null
+        data.isBooked = booked.length > 0
         delete data.bookmarks
         data.urlGoogleMap = `https://www.google.com/maps/search/?api=1&query=${data.location},${data.subdistrict},${data.district},Indonesia`
+        data.urlWhatsapp = `https://wa.me/${data.phone}`
         return res.status(200).json({ status: 200, message: 'Detail Kos', data })
     } catch (error) {
         console.log(error)
