@@ -44,7 +44,7 @@ const boardings = async (req, res) => {
 }
 
 const boarding = async (req, res) => {
-    const id = req.decoded.role === "BOARDING_HOUSE" ? req.decoded.id : req.params.id    
+    const id = req.decoded.role === "BOARDING_HOUSE" ? req.decoded.id : req.params.id
     try {
         if (isNaN(Number(id))) {
             return res.status(400).json({ status: 400, message: 'ID harus berupa angka!' })
@@ -134,7 +134,8 @@ const setConfirm = async (req, res) => {
 }
 
 const setPanorama = async (req, res) => {
-    const id = req.decoded.role === "BOARDING_HOUSE" ? req.decoded.id : req.params
+    const id = req.decoded.role === "BOARDING_HOUSE" ? req.decoded.id : req.params.id
+    console.log({ id })
     const panoramaPicture = req.file
     try {
         if (isNaN(Number(id))) {
