@@ -305,7 +305,7 @@ const histories = async (req, res) => {
                             name: true
                         }
                     },
-                    bookedDate: true
+                    bookedDate: true,                    
                 },
                 orderBy: {
                     bookedDate: "desc"
@@ -346,7 +346,7 @@ const histories = async (req, res) => {
                 time: booking.bookedDate,
                 picture: booking.boardingHouse.pictures.length > 0 ? booking.boardingHouse.pictures[0].picture : null,
                 timeRelative: getRelativeTime(booking.bookedDate, "id"),
-                createdAt: booking.createdAt
+                createdAt: booking.bookedDate
             })
         }
 
