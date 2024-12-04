@@ -56,13 +56,20 @@ const boarding = async (req, res) => {
             include: {
                 _count: true,
                 pictures: true,
-                reviews: true
+                reviews: true,
+                bookings: true
             }
         })
         if (!data) {
             return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
         }
         data.averageRating = data.reviews.reduce((a, b) => a + b.rating, 0) / data.reviews.length || 0
+        data.dashboard = {
+            totalTransaction: data.bookings.length,
+            totalRoom: data.maxCapacity,
+            totalFilledRoom: data.bookings.filter((b) => b.isActive).length,
+            totalFreeRoom: data.maxCapacity - data.bookings.filter((b) => b.isActive).length
+        }
         return res.status(200).json({ status: 200, message: 'Detail Kos', data })
     } catch (error) {
         console.log(error)
