@@ -135,7 +135,6 @@ const setConfirm = async (req, res) => {
 
 const setPanorama = async (req, res) => {
     const id = req.decoded.role === "BOARDING_HOUSE" ? req.decoded.id : req.params.id
-    console.log({ id })
     const panoramaPicture = req.file
     try {
         if (isNaN(Number(id))) {
@@ -229,10 +228,36 @@ const setOwnerPicture = async (req, res) => {
     }
 }
 
+const setActive = async (req, res) => {
+    const id = req.decoded.role === "BOARDING_HOUSE" ? req.decoded.id : req.params.id
+    try {
+        if (isNaN(Number(id))) {
+            return res.status(400).json({ status: 400, message: 'ID harus berupa angka!' })
+        }
+        const check = await prisma.boardingHouse.count({ where: { boardingHouseId: Number(id) } })
+        if (!check) {
+            return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
+        }
+        const updated = await prisma.boardingHouse.update({
+            where: {
+                boardingHouseId: Number(id)
+            },
+            data: {
+                isActive: true
+            }
+        })
+        return res.status(200).json({ status: 200, message: updated.isActive ? "Berhasil mengaktifkan" : "Berhasil menonaktifkan", updated })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ status: 500, message: 'Terjadi kesalahan' })
+    }
+}
+
 router.get("/", verification(["ADMIN"]), boardings)
 router.get("/:id", verification(["ADMIN", "BOARDING_HOUSE"]), boarding)
 router.put("/:id", verification(["ADMIN", "BOARDING_HOUSE"]), edit)
 router.patch("/:id/confirm", verification(["ADMIN"]), setConfirm)
+router.patch("/:id/active", verification(["ADMIN", "BOARDING_HOUSE"]), setActive)
 router.patch("/:id/panorama", verification(["ADMIN", "BOARDING_HOUSE"]), uploadCloudinary("panorama").single("panorama"), setPanorama)
 router.patch("/owner/picture", verification(["BOARDING_HOUSE"]), uploadCloudinary("profile").single("ownerPicture"), setOwnerPicture)
 
