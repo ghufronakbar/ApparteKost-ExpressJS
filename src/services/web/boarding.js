@@ -260,6 +260,26 @@ const setActive = async (req, res) => {
     }
 }
 
+const dashboard = async (req, res) => {
+    try {
+        const [users, boardings] = await Promise.all([
+            prisma.user.count(),
+            prisma.boardingHouse.findMany({ select: { isActive: true, isPending: true } })
+        ])
+        const data = {
+            totalUsers: users,
+            totalBoardingHouses: boardings.length,
+            totalActiveBoardingHouses: boardings.filter((b) => b.isActive).length,
+            totalPendingBoardingHouses: boardings.filter((b) => b.isPending).length,
+        }
+        return res.status(200).json({ status: 200, message: 'Berhasil mengambil data', data })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ status: 500, message: 'Terjadi kesalahan' })
+    }
+}
+
+router.get("/dashboard", verification(["ADMIN"]), dashboard)
 router.get("/", verification(["ADMIN"]), boardings)
 router.get("/:id", verification(["ADMIN", "BOARDING_HOUSE"]), boarding)
 router.put("/:id", verification(["ADMIN", "BOARDING_HOUSE"]), edit)
