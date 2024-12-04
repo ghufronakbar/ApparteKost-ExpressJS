@@ -345,7 +345,8 @@ const histories = async (req, res) => {
                 subdistrict: booking.boardingHouse.subdistrict,
                 time: booking.bookedDate,
                 picture: booking.boardingHouse.pictures.length > 0 ? booking.boardingHouse.pictures[0].picture : null,
-                timeRelative: getRelativeTime(booking.bookedDate, "id")
+                timeRelative: getRelativeTime(booking.bookedDate, "id"),
+                createdAt: booking.createdAt
             })
         }
 
@@ -358,9 +359,12 @@ const histories = async (req, res) => {
                 subdistrict: review.boardingHouse.subdistrict,
                 time: review.createdAt,
                 picture: review.boardingHouse.pictures.length > 0 ? review.boardingHouse.pictures[0].picture : null,
-                timeRelative: getRelativeTime(review.createdAt, "id")
+                timeRelative: getRelativeTime(review.createdAt, "id"),
+                createdAt: review.createdAt
             })
         }
+
+        allHistories.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
         return res.status(200).json({ status: 200, message: 'Berhasil mendapatkan riwayat', data: allHistories })
 
