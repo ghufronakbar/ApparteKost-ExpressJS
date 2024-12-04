@@ -123,6 +123,7 @@ const boarding = async (req, res) => {
             return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
         }
         data.averageRating = data.reviews.reduce((a, b) => a + b.rating, 0) / data.reviews.length || 0
+        data.availableRoom = data.maxCapacity - data.bookings.filter((b) => b.isActive).length
         data.isBookmarked = data.bookmarks.some(b => b.userId === userId)
         const review = data.reviews.filter(r => r.userId === userId)
         data.review = review.length > 0 ? review[0] : null
