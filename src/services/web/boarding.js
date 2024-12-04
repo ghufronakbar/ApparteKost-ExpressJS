@@ -234,7 +234,7 @@ const setActive = async (req, res) => {
         if (isNaN(Number(id))) {
             return res.status(400).json({ status: 400, message: 'ID harus berupa angka!' })
         }
-        const check = await prisma.boardingHouse.count({ where: { boardingHouseId: Number(id) } })
+        const check = await prisma.boardingHouse.findFirst({ where: { boardingHouseId: Number(id) }, select: { isActive: true } })
         if (!check) {
             return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
         }
@@ -243,7 +243,7 @@ const setActive = async (req, res) => {
                 boardingHouseId: Number(id)
             },
             data: {
-                isActive: true
+                isActive: !check.isActive
             }
         })
         return res.status(200).json({ status: 200, message: updated.isActive ? "Berhasil mengaktifkan" : "Berhasil menonaktifkan", updated })
