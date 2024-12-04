@@ -65,10 +65,10 @@ const boarding = async (req, res) => {
         }
         data.averageRating = data.reviews.reduce((a, b) => a + b.rating, 0) / data.reviews.length || 0
         data.dashboard = {
-            totalTransaction: data.bookings.length,
-            totalRoom: data.maxCapacity,
-            totalFilledRoom: data.bookings.filter((b) => b.isActive).length,
-            totalFreeRoom: data.maxCapacity - data.bookings.filter((b) => b.isActive).length
+            totalTransactions: data.bookings.length,
+            totalRooms: data.maxCapacity,
+            totalFilledRooms: data.bookings.filter((b) => b.isActive).length,
+            totalFreeRooms: data.maxCapacity - data.bookings.filter((b) => b.isActive).length
         }
         return res.status(200).json({ status: 200, message: 'Detail Kos', data })
     } catch (error) {
