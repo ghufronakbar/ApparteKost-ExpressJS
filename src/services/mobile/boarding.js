@@ -95,6 +95,7 @@ const boarding = async (req, res) => {
             include: {
                 _count: true,
                 pictures: true,
+                panoramas: true,
                 reviews: {
                     select: {
                         reviewId: true,

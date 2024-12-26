@@ -38,7 +38,7 @@ model BoardingHouse {
   district        String
   subdistrict     String
   location        String
-  panoramaPicture String?
+  panoramas       Panorama[]
   maxCapacity     Int
   price           Float
   isPending       Boolean    @default(true)
@@ -48,6 +48,13 @@ model BoardingHouse {
   reviews         Review[]
   bookings        Booking[]
   bookmarks       Bookmark[]
+}
+
+model Panorama {
+  panoramaId      Int           @id @default(autoincrement())
+  panorama        String
+  boardingHouse   BoardingHouse @relation(fields: [boardingHouseId], references: [boardingHouseId])
+  boardingHouseId Int
 }
 
 model Picture {

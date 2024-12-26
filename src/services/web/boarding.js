@@ -2,8 +2,7 @@ import express from 'express'
 import prisma from '../../db/prisma.js'
 const router = express.Router()
 import bcrypt from 'bcrypt'
-import jwt from "jsonwebtoken"
-import { APP_NAME, JWT_SECRET } from "../../constant/index.js"
+import { APP_NAME } from "../../constant/index.js"
 import uploadCloudinary from "../../utils/cloudinary/uploadCloudinary.js"
 import verification from "../../middleware/verification.js"
 import sendWhatsapp from '../../utils/fonnte/sendWhatsapp.js'
@@ -20,6 +19,7 @@ const boardings = async (req, res) => {
                         bookings: true
                     }
                 },
+                panoramas: true,
                 pictures: {
                     select: {
                         picture: true
@@ -92,19 +92,19 @@ const setConfirm = async (req, res) => {
                 boardingHouseId: Number(id)
             },
             select: {
-                panoramaPicture: true,
                 phone: true,
                 name: true,
                 owner: true,
                 isPending: true,
                 email: true,
-                password: true
+                password: true,
+                panoramas: true,
             }
         })
         if (!check) {
             return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
         }
-        if (isConfirmed && check.panoramaPicture === null) {
+        if (isConfirmed && check.panoramas.length === 0) {
             return res.status(400).json({ status: 400, message: 'Unggah gambar panorama terlebih dahulu!' })
         }
 
@@ -142,12 +142,12 @@ const setConfirm = async (req, res) => {
 
 const setPanorama = async (req, res) => {
     const id = req.decoded.role === "BOARDING_HOUSE" ? req.decoded.id : req.params.id
-    const panoramaPicture = req.file
+    const panoramaPictures = req.files
     try {
         if (isNaN(Number(id))) {
             return res.status(400).json({ status: 400, message: 'ID harus berupa angka!' })
         }
-        if (!panoramaPicture) {
+        if (!panoramaPictures || panoramaPictures?.length === 0) {
             return res.status(400).json({ status: 400, message: 'Unggah gambar panorama terlebih dahulu!' })
         }
         const check = await prisma.boardingHouse.findFirst({
@@ -158,15 +158,21 @@ const setPanorama = async (req, res) => {
         if (!check) {
             return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
         }
+
+        const urls = panoramaPictures.map((p) => p.path)
+
         const data = await prisma.boardingHouse.update({
             where: {
                 boardingHouseId: Number(id)
             },
             data: {
-                panoramaPicture: panoramaPicture.path,
+                panoramas: { createMany: { data: urls.map((url) => ({ panorama: url })) } }
             },
+            include: {
+                panoramas: true
+            }
         })
-        return res.status(200).json({ status: 200, message: "Berhasil mengganti gambar panorama", data })
+        return res.status(200).json({ status: 200, message: "Berhasil mengunggah gambar panorama", data })
     } catch (error) {
         console.log(error)
         return res.status(500).json({ status: 500, message: 'Terjadi kesalahan' })
@@ -279,13 +285,36 @@ const dashboard = async (req, res) => {
     }
 }
 
+const deletePanorama = async (req, res) => {
+    const { id } = req.params
+    try {
+        if (isNaN(Number(id))) {
+            return res.status(400).json({ status: 400, message: 'ID harus berupa angka!' })
+        }
+        const check = await prisma.boardingHouse.count({ where: { boardingHouseId: Number(id) } })
+        if (check === 0) {
+            return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
+        }
+        const updated = await prisma.panorama.delete({
+            where: {
+                panoramaId: Number(id)
+            }
+        })
+        return res.status(200).json({ status: 200, message: "Berhasil menghapus panorama", updated })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ status: 500, message: 'Terjadi kesalahan' })
+    }
+}
+
 router.get("/dashboard", verification(["ADMIN"]), dashboard)
 router.get("/", verification(["ADMIN"]), boardings)
 router.get("/:id", verification(["ADMIN", "BOARDING_HOUSE"]), boarding)
 router.put("/:id", verification(["ADMIN", "BOARDING_HOUSE"]), edit)
 router.patch("/:id/confirm", verification(["ADMIN"]), setConfirm)
 router.patch("/:id/active", verification(["ADMIN", "BOARDING_HOUSE"]), setActive)
-router.patch("/:id/panorama", verification(["ADMIN", "BOARDING_HOUSE"]), uploadCloudinary("panorama").single("panorama"), setPanorama)
+router.patch("/:id/panorama", verification(["ADMIN", "BOARDING_HOUSE"]), uploadCloudinary("panorama").array("panorama"), setPanorama)
+router.delete("/:id/panorama", verification(["ADMIN", "BOARDING_HOUSE"]), deletePanorama)
 router.patch("/owner/picture", verification(["BOARDING_HOUSE"]), uploadCloudinary("profile").single("ownerPicture"), setOwnerPicture)
 
 export default router
