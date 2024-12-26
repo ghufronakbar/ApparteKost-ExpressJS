@@ -291,8 +291,12 @@ const deletePanorama = async (req, res) => {
         if (isNaN(Number(id))) {
             return res.status(400).json({ status: 400, message: 'ID harus berupa angka!' })
         }
-        const check = await prisma.boardingHouse.count({ where: { boardingHouseId: Number(id) } })
-        if (check === 0) {
+        const check = await prisma.panorama.count({
+            where: {
+                panoramaId: Number(id)
+            }
+        })
+        if (!check) {
             return res.status(404).json({ status: 404, message: 'Tidak ada data ditemukan' })
         }
         const updated = await prisma.panorama.delete({
