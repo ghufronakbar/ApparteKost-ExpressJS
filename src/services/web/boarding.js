@@ -19,7 +19,6 @@ const boardings = async (req, res) => {
                         bookings: true
                     }
                 },
-                panoramas: true,
                 pictures: {
                     select: {
                         picture: true
@@ -57,7 +56,8 @@ const boarding = async (req, res) => {
                 _count: true,
                 pictures: true,
                 reviews: true,
-                bookings: true
+                bookings: true,
+                panoramas: true
             }
         })
         if (!data) {
